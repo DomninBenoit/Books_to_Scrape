@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 from extract_data_page import get_book_data
 from urllib.parse import urljoin
+import os
+import shutil
 
 # Ouvrir la page Web de la categorie et obtenir son contenu HTML
 category_url = (
@@ -11,16 +13,26 @@ category_url = (
 response = requests.get(category_url)
 soup = BeautifulSoup(response.content, "html.parser")
 num_pages = int(soup.find("li", {"class": "current"}).text.strip().split()[-1])
-
+book_list = []
 
 # Liste des liens des livres
-book_list = []
-books_links = soup.find_all("h3")
+for num_page in range(1, num_pages + 1):
+    page_url = urljoin(category_url, f"page-{num_page}.html")
+    response = requests.get(page_url)
+    soup = BeautifulSoup(response.content, "html.parser")
 
-# Ajout livre par livre
-for book_link in books_links:
-    book_url = urljoin(category_url, book_link.find("a")["href"])
-    book_list.append(get_book_data(book_url))
+    books_links = soup.find_all("h3")
+
+    # Ajout livre par livre
+    for book_link in books_links:
+        book_url = urljoin(category_url, book_link.find("a")["href"])
+        book_list.append(get_book_data(book_url))
+
+# Création copie si fichier déjà éxistant
+filename = "category_data.csv"
+if os.path.isfile(filename):
+    backup_filename = "category_data_backup.csv"
+    shutil.copy2(filename, backup_filename)
 
 # Écrit les données dans un fichier CSV
 fieldnames = [
@@ -35,7 +47,7 @@ fieldnames = [
     "review_rating",
     "image_url",
 ]
-filename = "category_data.csv"
+
 with open(filename, "a", newline="", encoding="utf-8") as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
