@@ -1,21 +1,29 @@
 import csv
 import requests
+import time
 from bs4 import BeautifulSoup
 from extract_data_page import get_book_data
 from urllib.parse import urljoin
 
+# démarrage timer
+start_time = time.time()
+
 # Ouvrir la page Web de la categorie et obtenir son contenu HTML
-category_url = (
-    "http://books.toscrape.com/catalogue/category/books/fantasy_19/index.html"
-)
-response = requests.get(category_url)
+all_books_url = "http://books.toscrape.com"
+
+response = requests.get(all_books_url)
 soup = BeautifulSoup(response.content, "html.parser")
 num_pages = int(soup.find("li", {"class": "current"}).text.strip().split()[-1])
 book_list = []
 
 # Liste des liens des livres
 for num_page in range(1, num_pages + 1):
-    page_url = urljoin(category_url, f"page-{num_page}.html")
+    page_url = (
+        urljoin(all_books_url, f"index.html")
+        if num_page == 1
+        else urljoin(all_books_url, f"catalogue/page-{num_page}.html")
+    )
+    print(page_url)
     response = requests.get(page_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
@@ -23,11 +31,12 @@ for num_page in range(1, num_pages + 1):
 
     # Ajout livre par livre
     for book_link in books_links:
-        book_url = urljoin(category_url, book_link.find("a")["href"])
+        book_url = urljoin(page_url, book_link.find("a")["href"])
         book_list.append(get_book_data(book_url))
 
+
 # Écrit les données dans un fichier CSV
-filename = "category_data.csv"
+filename = "all_books_data.csv"
 fieldnames = [
     "product_page_url",
     "upc",
@@ -49,4 +58,9 @@ with open(filename, "a", newline="", encoding="utf-8") as csvfile:
 
     # Écrit les données de chaque livre
     for book in book_list:
-        writer.writerow(book)
+        if book is not None:
+            writer.writerow(book)
+
+end_time = time.time()
+execution_time = end_time - start_time
+print("Temps d'extraction :", execution_time, "secondes")
