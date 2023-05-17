@@ -4,6 +4,7 @@ import time
 from bs4 import BeautifulSoup
 from extract_data_page import get_book_data
 from urllib.parse import urljoin
+from download_img import download_images
 
 # démarrage timer
 start_time = time.time()
@@ -15,6 +16,21 @@ response = requests.get(all_books_url)
 soup = BeautifulSoup(response.content, "html.parser")
 num_pages = int(soup.find("li", {"class": "current"}).text.strip().split()[-1])
 book_list = []
+
+# Écrit les données dans un fichier CSV
+filename = "all_books_data.csv"
+fieldnames = [
+    "product_page_url",
+    "upc",
+    "title",
+    "price_including_tax",
+    "price_excluding_tax",
+    "number_available",
+    "product_description",
+    "category",
+    "review_rating",
+    "image_url",
+]
 
 # Liste des liens des livres
 for num_page in range(1, num_pages + 1):
@@ -35,21 +51,6 @@ for num_page in range(1, num_pages + 1):
         book_list.append(get_book_data(book_url))
 
 
-# Écrit les données dans un fichier CSV
-filename = "all_books_data.csv"
-fieldnames = [
-    "product_page_url",
-    "upc",
-    "title",
-    "price_including_tax",
-    "price_excluding_tax",
-    "number_available",
-    "product_description",
-    "category",
-    "review_rating",
-    "image_url",
-]
-
 with open(filename, "a", newline="", encoding="utf-8") as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -60,6 +61,8 @@ with open(filename, "a", newline="", encoding="utf-8") as csvfile:
     for book in book_list:
         if book is not None:
             writer.writerow(book)
+
+    download_images(filename, fieldnames)
 
 end_time = time.time()
 execution_time = end_time - start_time

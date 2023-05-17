@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 
-def get_book_data(url_link):
+def get_book_data(url_link: str) -> dict:
     # Ouvrir la page Web et obtenir son contenu HTML
     url = urljoin("http://books.toscrape.com/catalogue/", url_link)
     html = urlopen(url)
