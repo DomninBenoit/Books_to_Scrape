@@ -1,23 +1,33 @@
-import csv
 import os
 import requests
+from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
 
-def download_images(filename, fieldnames):
+def download_images(all_books_url, num_pages):
     image_directory = "images"
-    with open(filename, newline="", encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile, fieldnames=fieldnames)
-        next(reader)  # Ignorer la première ligne (titres de colonnes)
 
-        # Parcourir les lignes du fichier CSV
-        for row in reader:
-            image_url = row["image_url"]
+    for num_page in range(1, num_pages + 1):
+        page_url = (
+            urljoin(all_books_url, f"index.html")
+            if num_page == 1
+            else urljoin(all_books_url, f"catalogue/page-{num_page}.html")
+        )
+        print(page_url, "download images")
+        response = requests.get(page_url)
+        soup = BeautifulSoup(response.content, "html.parser")
 
-            # Vérifier si l'URL de l'image existe
+        books_links = soup.find_all("h3")
+
+        for book_link in books_links:
+            book_url = urljoin(page_url, book_link.find("a")["href"])
+            book_response = requests.get(book_url)
+            book_soup = BeautifulSoup(book_response.content, "html.parser")
+            image_element = book_soup.find("img", {"class": "thumbnail"})
+            image_url = image_element.get("src") if image_element else ""
+
             if image_url:
-                # Construire le chemin de destination pour l'image en utilisant le titre du livre comme nom de fichier
-                image_filename = f"{row['upc']}.jpg"
+                image_filename = f"{book_url.split('/')[-2]}.jpg"
                 image_path = os.path.join(image_directory, image_filename)
 
                 # Enregistrer l'image
