@@ -18,23 +18,31 @@ def get_num_pages(all_books_url):
 def extract_books(all_books_url, num_pages):
     book_list = []
 
-    # Liste des liens des livres
-    for num_page in range(1, num_pages + 1):
-        page_url = (
-            urljoin(all_books_url, f"index.html")
-            if num_page == 1
-            else urljoin(all_books_url, f"catalogue/page-{num_page}.html")
-        )
-        print(page_url)
-        response = requests.get(page_url)
-        soup = BeautifulSoup(response.content, "html.parser")
+    with ThreadPoolExecutor() as executor:
+        # Liste des liens des livres
+        for num_page in range(1, num_pages + 1):
+            page_url = (
+                urljoin(all_books_url, f"index.html")
+                if num_page == 1
+                else urljoin(all_books_url, f"catalogue/page-{num_page}.html")
+            )
+            print(page_url)
+            response = requests.get(page_url)
+            soup = BeautifulSoup(response.content, "html.parser")
 
-        books_links = soup.find_all("h3")
+            books_links = soup.find_all("h3")
 
-        # Ajout livre par livre
-        for book_link in books_links:
-            book_url = urljoin(page_url, book_link.find("a")["href"])
-            book_list.append(get_book_data(book_url))
+            # Ajout livre par livre
+            book_tasks = []
+            for book_link in books_links:
+                book_url = urljoin(page_url, book_link.find("a")["href"])
+                book_task = executor.submit(get_book_data, book_url)
+                book_tasks.append(book_task)
+
+            for book_task in book_tasks:
+                book = book_task.result()
+                if book is not None:
+                    book_list.append(book)
 
     return book_list
 

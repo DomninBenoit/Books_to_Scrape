@@ -73,8 +73,4 @@ def get_book_data(url_link: str) -> dict:
         "image_url": image_url,
     }
 
-    # Vérification extraction avec succès
-    if not all(book.values()):
-        return None
-
     return book
