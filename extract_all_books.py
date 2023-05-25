@@ -8,14 +8,14 @@ from download_img import download_images
 from concurrent.futures import ThreadPoolExecutor
 
 
-def get_num_pages(all_books_url):
+def get_num_pages(all_books_url: str) -> int:
     response = requests.get(all_books_url)
     soup = BeautifulSoup(response.content, "html.parser")
     num_pages = int(soup.find("li", {"class": "current"}).text.strip().split()[-1])
     return num_pages
 
 
-def extract_books(all_books_url, num_pages):
+def extract_books(all_books_url: str, num_pages: int) -> list:
     book_list = []
 
     with ThreadPoolExecutor() as executor:
@@ -47,7 +47,7 @@ def extract_books(all_books_url, num_pages):
     return book_list
 
 
-def add_books_in_csv(filename, fieldnames, book_list):
+def add_books_in_csv(filename: str, fieldnames: list, book_list: list):
     with open(filename, "a", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
