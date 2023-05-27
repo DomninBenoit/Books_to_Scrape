@@ -1,4 +1,5 @@
 import csv
+import os
 import requests
 import time
 from bs4 import BeautifulSoup
@@ -48,6 +49,8 @@ def extract_books(all_books_url: str, num_pages: int) -> list:
 
 
 def add_books_in_csv(filename: str, fieldnames: list, book_list: list):
+    categories = set()
+
     with open(filename, "a", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -57,7 +60,18 @@ def add_books_in_csv(filename: str, fieldnames: list, book_list: list):
         # Écrit les données de chaque livre
         for book in book_list:
             if book is not None:
+                categories.add(book["category"])
                 writer.writerow(book)
+
+        for category in categories:
+            category_book_list = [book for book in book_list if book["category"] == category]
+
+            if category_book_list:
+                category_filename = os.path.join("csv", f"{category}_books_data.csv")
+                with open(category_filename, "w", newline="", encoding="utf-8") as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(category_book_list)
 
 
 def extract_and_download_books():
@@ -65,10 +79,11 @@ def extract_and_download_books():
     start_time = time.time()
 
     # Ouvrir la page Web de la categorie et obtenir son contenu HTML
+
     all_books_url = "http://books.toscrape.com"
 
     # Écrit les données dans un fichier CSV
-    filename = "all_books_data.csv"
+    filename = os.path.join("csv", f"all_books_data.csv")
     fieldnames = [
         "product_page_url",
         "upc",

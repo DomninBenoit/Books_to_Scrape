@@ -31,9 +31,7 @@ def download_images(all_books_url: str, num_pages: int):
                 if image_url:
                     image_name = image_element.parent["href"].split("/")[-2]
                     image_filename = f"{image_name}.jpg"
-                    print(image_filename)
                     image_path = os.path.join(image_directory, image_filename)
-                    print(image_path)
 
                     # Enregistrer l'image
                     executor.submit(save_image_from_url, image_url, image_path)

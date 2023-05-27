@@ -160,4 +160,4 @@ cython_debug/
 #.idea/
 
 images/
-all_books_data.csv
+csv/
